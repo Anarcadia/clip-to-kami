@@ -49,7 +49,7 @@
 ## 效果图
 
 <img width="3024" height="4032" alt="IMG_0997" src="https://github.com/user-attachments/assets/b7c919c1-7831-4309-95e9-19ff099ce37d" />
-<img width="1234" height="166" alt="CleanShot 2026-04-27 at 05 32 11@2x" src="https://github.com/user-attachments/assets/36d89d4f-a84e-4f58-8b7d-c55a0d571d71" />
+<img width="776" height="1380" alt="CleanShot 2026-04-28 at 17 44 26@2x" src="https://github.com/user-attachments/assets/1fdd630f-4ccf-4da4-ab49-86ef4ed512ee" />
 
 
 ---
