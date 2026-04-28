@@ -200,10 +200,18 @@ python3 scripts/convert.py ./notes.md -t "我的笔记" -a "张三"
 ## 常见问题
 
 ### Q: WeasyPrint 报错 `cannot load library 'libgobject-2.0-0'`？
-A: macOS 上需要 Homebrew 的 Pango/Cairo 库。脚本已自动设 `DYLD_LIBRARY_PATH=/opt/homebrew/lib`，若仍报错：
+A: macOS 上需要 Homebrew 的 Pango/Cairo 库。脚本启动时会自动检测 Homebrew 路径并写入 `DYLD_LIBRARY_PATH`（Apple Silicon → `/opt/homebrew/lib`，Intel Mac → `/usr/local/lib`）。若仍报错：
 ```bash
 brew install pango gdk-pixbuf cairo
+
+# 推荐：可移植写法，自动适配两种架构
+export DYLD_LIBRARY_PATH=$(brew --prefix)/lib:$DYLD_LIBRARY_PATH
+
+# 或者按你的机器类型选一条
+# Apple Silicon:
 export DYLD_LIBRARY_PATH=/opt/homebrew/lib:$DYLD_LIBRARY_PATH
+# Intel Mac:
+export DYLD_LIBRARY_PATH=/usr/local/lib:$DYLD_LIBRARY_PATH
 ```
 
 ### Q: PDF 里图片全没了？
