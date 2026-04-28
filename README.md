@@ -4,6 +4,21 @@
 
 > 一条命令从 URL 到印刷品质 PDF。
 
+<!-- ══════════════════════════════════════════════════════════════════════════
+     ⚠️ USER-PROTECTED CONTENT — DO NOT MODIFY ⚠️
+     本节由仓库作者亲手撰写。任何 AI / Agent 在自动更新此 README 时，
+     **不得改写、删除、重排或"优化"** 本 USER-PROTECTED 区块内的任何文字。
+     仅仓库作者本人可编辑此区块。
+     ══════════════════════════════════════════════════════════════════════════ -->
+
+## 致敬
+
+本 Skill 是在 [**Kami**](https://github.com/tw93/kami) 原作者 [@Tw93](https://github.com/tw93) 的基础上做的流程优化，**设计灵感全归于原作者**。
+
+> Kami（紙・かみ）是 Tw93 为 AI 时代打造的文档设计系统——**"Good content deserves good paper."** 用一套统一的约束语言，让 Agent 输出的文档稳定、克制、可交付。clip-to-kami 在 Kami 的排版基底之上扩展了输入端（微信 / 网页 / EPUB / 本地文件），定位是 Kami 的**内容剪藏前置流水线**。
+
+<!-- ══════════════ END USER-PROTECTED CONTENT ══════════════ -->
+
 ---
 
 ## 功能速览
@@ -70,6 +85,65 @@ python3 scripts/convert.py ./my-notes.md
 # EPUB 电子书（按 spine 顺序合并所有章节，提取图片）
 python3 scripts/convert.py ~/Books/三体.epub
 ```
+
+---
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     ⚠️ USER-PROTECTED CONTENT — DO NOT MODIFY ⚠️
+     本节由仓库作者亲手撰写。任何 AI / Agent 在自动更新此 README 时，
+     **不得改写、删除、重排或"优化"** 本 USER-PROTECTED 区块内的任何文字。
+     仅仓库作者本人可编辑此区块。
+     ══════════════════════════════════════════════════════════════════════════ -->
+
+## 自然语言调用 Skill（给非编程用户）
+
+如果你用的是支持 **Skill 系统** 的 AI Agent —— 比如 **Claude Code** 终端、**OpenClaw**、或类似 **Hermes Agent** 的工具 —— 你**不需要**敲 `python3 scripts/convert.py ...` 这种命令行。直接用一句话告诉 AI 你想做什么，它会自己识别意图、调用本 Skill 完成排版。
+
+### 怎么说（对话示例）
+
+| 你想做什么 | 直接对你的 AI 助手说 |
+|---|---|
+| 微信文章转 PDF | "把这个微信文章转成 PDF：`https://mp.weixin.qq.com/s/xxxxxx`" |
+| 网页文章转 PDF | "帮我把 https://www.ruanyifeng.com/blog/xxx.html 排版打印" |
+| EPUB 电子书转 PDF | "把 `~/Books/三体.epub` 转成 Kami PDF" |
+| 本地 Markdown 排版 | "把 `~/notes/想法.md` 转成可打印的 PDF" |
+| 同时要黑白版 | 在请求结尾加一句"顺便给我生成黑白打印友好版" |
+| 自定义标题作者 | "标题改成《XXX》，作者写 XXX" |
+
+不需要记参数、不需要查 `--help`。AI 看到你提到的关键词（**PDF、转换、排版、打印、Kami、转电子书** 之类），就知道该用本 Skill。
+
+### "黑底白字的路由提示"是什么
+
+当 AI 听完你的请求、决定调用某个 Skill 时，终端会闪过一行**反白（黑底白字）的提示**，类似：
+
+```
+🔧 Using skill: clip-to-kami
+```
+
+或者图形界面里会出现一个 **clip-to-kami** 的徽章。这就是 **Skill 路由（Routing）**——你可以理解成：
+
+> AI 像一个有很多工具的助手。你给它一个任务，它会先在脑子里**挑出最合适的那个工具**，然后才动手。"路由"就是这个**挑选 + 跳转**的过程。
+> 
+> 黑底白字的提示，就是 AI 告诉你：**"我决定用这把工具"**。
+
+#### 路由对了 vs 路由错了
+
+- ✅ **看到 `clip-to-kami`** → AI 找对了路，正在用本 Skill 给你转 PDF
+- ⚠️ **跳出别的 Skill 名字**（比如 `kami`、`baoyu-translate`、`web-browser`）→ AI 走错了路。这时只要更明确地说一句：
+  > "**用 clip-to-kami 这个 Skill** 把 `xxx` 转成 PDF"
+  
+  把 Skill 名字直接念出来，等于强行指定路由
+- ❓ **完全没出现 Skill 提示** → AI 没有识别到 Skill 触发词，可能它身上根本没装这个 Skill。检查 `~/.claude/skills/clip-to-kami/` 或对应工具的 Skill 目录是否安装了本仓库
+
+### 进阶：触发词清单
+
+下面这些词出现在你的话里，多数 Skill-aware Agent 都会自动路由到本 Skill：
+
+`转成 PDF` / `生成 PDF` / `保存为 PDF` / `打印这篇` / `排版` / `Kami` / `WeasyPrint` / `epub 转 PDF` / `电子书转 PDF` / `epub 排版` / `网页转 PDF` / `Markdown 转 PDF` / `微信文章转 PDF`
+
+记不住也没关系，**说人话就行**——这些只是兜底关键词。
+
+<!-- ══════════════ END USER-PROTECTED CONTENT ══════════════ -->
 
 ---
 
