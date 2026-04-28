@@ -1,0 +1,81 @@
+{
+  "skill_name": "clip-to-kami",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "wechat-article-with-images",
+      "prompt": "把这篇微信文章转成 Kami PDF：https://mp.weixin.qq.com/s/KK09RIYs1ucohQJ0EElx-Q",
+      "expected_output": "A Kami-styled PDF with parchment background, page numbers, and embedded images from the WeChat article",
+      "files": [],
+      "assertions": [
+        {
+          "name": "pdf_generated",
+          "description": "PDF file exists and is non-empty"
+        },
+        {
+          "name": "has_page_numbers",
+          "description": "PDF contains page number text in footer"
+        },
+        {
+          "name": "has_images",
+          "description": "PDF contains embedded images (file size > 1MB suggests images present)"
+        },
+        {
+          "name": "correct_title",
+          "description": "PDF first page contains the article title"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "eval_name": "local-markdown-file",
+      "prompt": "把 /tmp/test-article.md 转成 PDF，标题用'测试文章'，作者'测试用户'",
+      "expected_output": "A Kami-styled PDF generated from the local markdown file with custom title and author",
+      "files": [
+        {
+          "path": "/tmp/test-article.md",
+          "content": "# 测试文章标题\n\n这是一段测试内容，包含**加粗**和*斜体*。\n\n## 代码块\n\n```python\ndef hello():\n    print('Hello World')\n```\n\n## 表格\n\n| 列1 | 列2 |\n|-----|-----|\n| A   | B   |\n| C   | D   |\n\n## 列表\n\n- 项目一\n- 项目二\n- 项目三\n\n> 这是一段引用文本\n"
+        }
+      ],
+      "assertions": [
+        {
+          "name": "pdf_generated",
+          "description": "PDF file exists and is non-empty"
+        },
+        {
+          "name": "custom_title",
+          "description": "PDF contains the custom title '测试文章'"
+        },
+        {
+          "name": "custom_author",
+          "description": "PDF contains the custom author '测试用户'"
+        },
+        {
+          "name": "code_block_preserved",
+          "description": "PDF contains the code block text"
+        },
+        {
+          "name": "table_preserved",
+          "description": "PDF contains the table structure"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "eval_name": "webpage-url",
+      "prompt": "把 https://example.com 这个网页转成 PDF",
+      "expected_output": "A Kami-styled PDF containing the extracted content from the webpage",
+      "files": [],
+      "assertions": [
+        {
+          "name": "pdf_generated",
+          "description": "PDF file exists and is non-empty"
+        },
+        {
+          "name": "has_content",
+          "description": "PDF contains non-empty text content"
+        }
+      ]
+    }
+  ]
+}

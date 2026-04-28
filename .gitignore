@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.venv/
+venv/
+env/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# clip-to-kami 运行产物
+output/
+test-output/
+*.pdf
+!assets/**/*.pdf
+*.log
+
+# Playwright 浏览器缓存（太大）
+playwright-browsers/
+
+# 本地调试配置
+.env
+.env.local
