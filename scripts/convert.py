@@ -20,10 +20,14 @@ from xml.etree import ElementTree as ET
 
 import platform
 if platform.system() == "Darwin":
+    # Apple Silicon → /opt/homebrew/lib; Intel Mac → /usr/local/lib
     _homebrew_lib = "/opt/homebrew/lib"
-    _current_dyld = os.environ.get("DYLD_LIBRARY_PATH", "")
-    if _homebrew_lib not in _current_dyld:
-        os.environ["DYLD_LIBRARY_PATH"] = f"{_homebrew_lib}:{_current_dyld}" if _current_dyld else _homebrew_lib
+    if not Path(_homebrew_lib).exists():
+        _homebrew_lib = "/usr/local/lib"
+    if Path(_homebrew_lib).exists():
+        _current_dyld = os.environ.get("DYLD_LIBRARY_PATH", "")
+        if _homebrew_lib not in _current_dyld:
+            os.environ["DYLD_LIBRARY_PATH"] = f"{_homebrew_lib}:{_current_dyld}" if _current_dyld else _homebrew_lib
 
 try:
     from bs4 import BeautifulSoup, NavigableString
@@ -1087,8 +1091,9 @@ def generate_pdf(html_content: str, output_path: str, font_dir: str = None) -> s
     Generate PDF using WeasyPrint.
 
     PITFALL: On macOS, WeasyPrint requires Homebrew libraries in DYLD_LIBRARY_PATH.
-    If weasyprint import fails with "cannot load library", set:
-        export DYLD_LIBRARY_PATH=/opt/homebrew/lib:$DYLD_LIBRARY_PATH
+    If weasyprint import fails with "cannot load library", set (use $(brew --prefix)
+    so it works on both Apple Silicon /opt/homebrew and Intel /usr/local):
+        export DYLD_LIBRARY_PATH=$(brew --prefix)/lib:$DYLD_LIBRARY_PATH
     """
     try:
         from weasyprint import HTML
@@ -1099,8 +1104,10 @@ def generate_pdf(html_content: str, output_path: str, font_dir: str = None) -> s
     except OSError as e:
         if "libgobject" in str(e).lower():
             print("ERROR: WeasyPrint cannot find system libraries.")
-            print("On macOS with Homebrew, run:")
-            print("  export DYLD_LIBRARY_PATH=/opt/homebrew/lib:$DYLD_LIBRARY_PATH")
+            print("On macOS with Homebrew, run one of (depending on architecture):")
+            print("  Apple Silicon: export DYLD_LIBRARY_PATH=/opt/homebrew/lib:$DYLD_LIBRARY_PATH")
+            print("  Intel Mac:     export DYLD_LIBRARY_PATH=/usr/local/lib:$DYLD_LIBRARY_PATH")
+            print("  Or portably:   export DYLD_LIBRARY_PATH=$(brew --prefix)/lib:$DYLD_LIBRARY_PATH")
             sys.exit(1)
         raise
 
@@ -1110,11 +1117,12 @@ def generate_pdf(html_content: str, output_path: str, font_dir: str = None) -> s
         html_path.write_text(html_content, encoding="utf-8")
 
         # Copy fonts for local rendering
+        # Prefer bundled fonts (always present in release); fall back to system
+        # Kami skill in case the user has it installed and bundled fonts went missing.
         if font_dir is None:
-            # Try to find Kami fonts
             for font_src in [
-                Path.home() / ".claude" / "skills" / "kami" / "assets" / "fonts",
                 Path(__file__).parent.parent / "assets" / "fonts",
+                Path.home() / ".claude" / "skills" / "kami" / "assets" / "fonts",
             ]:
                 if font_src.exists():
                     font_dir = str(font_src)
