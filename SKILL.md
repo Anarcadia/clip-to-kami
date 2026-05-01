@@ -311,4 +311,7 @@ A: Kami 模板已内置页码。如果缺失，检查模板是否完整加载。
 
 - 踩坑点详解：`references/pitfalls.md`
 - Kami 设计系统：`~/.claude/skills/kami/references/design.md`
-- Kami 生产指南：`~/.claude/skills/kami/references/production.md`
+- Kami 生产指南（含 WeasyPrint 渲染 bug 手册）：`~/.claude/skills/kami/references/production.md`
+- Kami 写作指南：`~/.claude/skills/kami/references/writing.md`
+- Kami 反面教材：`~/.claude/skills/kami/references/anti-patterns.md`
+- Kami Brand Profile 模板：`~/.claude/skills/kami/references/brand-profile.md`
