@@ -92,8 +92,8 @@ def localize_images(content_html: str, output_dir: Path, source_url: str = "") -
     downloaded, failed, skipped = 0, 0, 0
 
     for i, img in enumerate(soup.find_all("img")):
-        src = img.get("data-src") or img.get("src", "")
-        if not src or src.startswith("data:"):
+        src = (img.get("data-src") or img.get("src", "") or "").strip()
+        if not src or src.startswith(("data:", "javascript:")):
             skipped += 1
             continue
         if src.startswith("//"):
@@ -102,8 +102,9 @@ def localize_images(content_html: str, output_dir: Path, source_url: str = "") -
         if source_url and not src.startswith(("http://", "https://")):
             src = urljoin(source_url, src)
         if not src.startswith(("http://", "https://")):
-            skipped += 1
-            continue
+            # Fallback: bare host or relative path with no source_url base.
+            # Force https:// so we at least try the download instead of dropping silently.
+            src = "https://" + src.lstrip("/")
 
         if src in url_to_local:
             img["src"] = url_to_local[src]
