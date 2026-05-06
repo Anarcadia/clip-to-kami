@@ -4,6 +4,41 @@
 
 ---
 
+## 2026-05-07｜本地 Markdown 相对路径图片修复 + 封面"来源"不再回落本地路径
+
+**触发原因**：proma 工作区分支测试中发现两个隐患，回流到 root 主线一次性修复。
+
+### Bug 1：本地 Markdown 相对路径图片在 PDF 中全部丢失
+
+- **场景**：本地 `.md` 文件含 `![img](images/foo.png)` 相对路径引用，转 PDF 后图片缺失。
+- **根因**：`markdown.markdown()` 生成 `<img src="images/foo.png">` 后 HTML 写入 `~/Downloads/clip-to-kami/.../output.html`，WeasyPrint 从 output.html 所在目录解析 src，找不到图。
+- **修复**：`read_local_file()`（`scripts/convert.py:425`）在 markdown→html 之后用 BeautifulSoup 遍历 `<img>`，将相对路径 src 解析为基于 md 文件所在目录的绝对路径；http/https/data:/file:// 协议头与绝对路径跳过不动；解析后的绝对路径必须 `.exists()` 才会写回，避免误改。
+- **验证**：诺兰文章复测，PDF 从 ~50 KB（无图）恢复到 ~5.8 MB（21 张图嵌入）。
+
+### Bug 2：PDF 封面"来源"会打印本地文件路径
+
+- **场景**：处理无 frontmatter 的本地 md 时，封面"来源"字段会显示完整本地绝对路径（形如 `/Users/<user>/.../foo.md`），违反"封面禁止暴露本地路径，必须回溯原文 URL 或作者"的产品约束。
+- **根因**：
+  1. `read_local_file()` 的 source_url 兜底链最末端是 `str(path)`（本地绝对路径）。
+  2. `fill_kami_template()` 直接 `subtitle = f"来源: {source}"`，无任何 sanitization。
+- **修复**：
+  1. `read_local_file()` 兜底链改为 `... or author or title`，删除 `str(path)` 兜底——宁可用作者名/文件名（来自 frontmatter title 或 path.stem），也不暴露本地路径。
+  2. `fill_kami_template()` 增加 `_looks_local()` 守卫：source 以 `/`、`file://`、`~` 开头，或匹配 Windows 盘符，或包含 `/Users/`、`/home/` 时，降级为 `author or title or "本地文档"`。这一层守卫覆盖了 `--source` CLI 参数误传本地路径、EPUB 兜底路径泄漏等所有场景。
+- **副作用**：source 被降级后，eyebrow 文案会从"网页归档"自动切到"文档归档"（line 1076 已有 `source.startswith("http")` 判断，自洽）。
+
+### 修改范围
+
+只动了 `scripts/convert.py`：
+- `read_local_file()`（line 425-496）：兜底链调整 + 相对路径重写
+- `fill_kami_template()`（line 1019+）：增加 `_looks_local` 守卫
+
+### 已知遗留
+
+- 若 md 文件**完全无 frontmatter** 且文件名又是无意义的 `untitled.md` / `xxx.md`，封面"来源"会显示文件名 stem，仍不算理想——但比本地绝对路径好。后续可考虑加 CLI 参数 `--source-fallback` 让用户显式指定。
+- 相对路径重写只处理 `<img>`，未处理 `<a href>`、`<link href>`、CSS `background-image`，目前无场景需求。
+
+---
+
 ## 2026-05-05｜微信图片 URL 协议补全更鲁棒 + 收集阶段过滤无效 URL
 
 **触发原因**：抓取部分微信文章时，零星图片下载失败，控制台日志出现 `unknown url type` 之类的协议错误，且本地 images 文件编号断档（如 img_002~005 缺 img_001）。

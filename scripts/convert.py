@@ -440,7 +440,11 @@ def read_local_file(filepath: str) -> dict:
                 metadata[key.strip().lower()] = value.strip().strip('"').strip("'")
         content = content[frontmatter_match.end():]
 
-    # Resolve source URL from frontmatter, fallback to local path
+    # Resolve source URL from frontmatter. Never fall back to a local path:
+    # cover should reference the original article URL or, failing that,
+    # the author / title — anything but a filesystem path.
+    author = metadata.get("author") or metadata.get("sourceauthor") or ""
+    title = metadata.get("title") or path.stem
     source_url = (
         metadata.get("url")
         or metadata.get("source")
@@ -448,7 +452,8 @@ def read_local_file(filepath: str) -> dict:
         or metadata.get("source_url")
         or metadata.get("original_url")
         or metadata.get("link")
-        or str(path)
+        or author
+        or title
     )
 
     # Convert markdown to HTML if needed
@@ -459,14 +464,32 @@ def read_local_file(filepath: str) -> dict:
         except ImportError:
             print("WARNING: python-markdown not installed. Install with: pip install markdown")
             html = f"<pre>{html_module.escape(content)}</pre>"
+
+        # Rewrite relative <img src> paths to absolute paths based on the
+        # markdown file's directory, so WeasyPrint can resolve them from the
+        # output HTML's location (which differs from the source md's location).
+        base_dir = path.parent.resolve()
+        soup = BeautifulSoup(html, "html.parser")
+        rewritten = 0
+        for img in soup.find_all("img"):
+            src = img.get("src", "")
+            if not src or src.startswith(("http://", "https://", "data:", "file://", "/")):
+                continue
+            resolved = (base_dir / src).resolve()
+            if resolved.exists():
+                img["src"] = str(resolved)
+                rewritten += 1
+        if rewritten:
+            html = str(soup)
+            print(f"Rewrote {rewritten} relative image path(s) to absolute.")
     else:
         # Plain text: wrap paragraphs
         paragraphs = [f"<p>{html_module.escape(p)}</p>" for p in content.split("\n\n") if p.strip()]
         html = "\n".join(paragraphs)
 
     return {
-        "title": metadata.get("title") or path.stem,
-        "author": metadata.get("author") or metadata.get("sourceauthor") or "",
+        "title": title,
+        "author": author,
         "date": metadata.get("date") or metadata.get("sourcedate") or "",
         "html": html,
         "source": source_url,
@@ -1023,6 +1046,24 @@ def fill_kami_template(
 
     with open(template_path) as f:
         template = f.read()
+
+    # Guard against local filesystem paths leaking onto the cover.
+    # If `source` looks like a local path (absolute / file://) or contains the
+    # user's home directory, demote it to author or title — the cover should
+    # never advertise where the file lives on disk.
+    def _looks_local(s: str) -> bool:
+        if not s:
+            return True
+        if s.startswith(("http://", "https://")):
+            return False
+        if s.startswith(("/", "file://", "~")):
+            return True
+        if re.match(r"^[A-Za-z]:[\\/]", s):  # Windows drive
+            return True
+        return "/Users/" in s or "/home/" in s
+
+    if _looks_local(source):
+        source = author or title or "本地文档"
 
     subtitle = f"来源: {source}"
 
